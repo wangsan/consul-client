@@ -1,15 +1,17 @@
 package com.orbitz.consul;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.net.HostAndPort;
 import org.junit.After;
 import org.junit.BeforeClass;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public abstract class BaseIntegrationTest {
+public abstract class BaseIntegrationTest implements PrintFunction {
 
     private final List<String> deregisterServices = new CopyOnWriteArrayList<>();
 

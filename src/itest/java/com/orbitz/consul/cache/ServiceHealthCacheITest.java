@@ -3,10 +3,11 @@ package com.orbitz.consul.cache;
 import com.google.common.collect.ImmutableMap;
 import com.orbitz.consul.BaseIntegrationTest;
 import com.orbitz.consul.HealthClient;
-import com.orbitz.consul.model.health.ServiceHealth;
 import com.orbitz.consul.Synchroniser;
+import com.orbitz.consul.model.health.ServiceHealth;
 import org.junit.Test;
 
+import java.sql.Time;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -72,7 +73,7 @@ public class ServiceHealthCacheITest extends BaseIntegrationTest {
 
             ImmutableMap<ServiceHealthKey, ServiceHealth> healthMap = svHealth.getMap();
             assertEquals(healthMap.size(), 2);
-            ServiceHealth health =healthMap.get(serviceKey1);
+            ServiceHealth health = healthMap.get(serviceKey1);
             ServiceHealth health2 = healthMap.get(serviceKey2);
 
             assertEquals(serviceId, health.getService().getId());
@@ -119,6 +120,62 @@ public class ServiceHealthCacheITest extends BaseIntegrationTest {
         assertEquals(0, event1.size());
         svHealth.stop();
     }
+
+    @Test
+    public void shouldNotifyListener2() throws Exception {
+        String serviceName = UUID.randomUUID().toString();
+        String serviceId_1 = "test1";
+        String serviceId_2 = "test2";
+        String serviceId_3 = "test3";
+
+
+        client.agentClient().register(8080, 20L, serviceName, serviceId_1, NO_TAGS, NO_META);
+        client.agentClient().register(8081, 20L, serviceName, serviceId_2, NO_TAGS, NO_META);
+
+
+        client.agentClient().pass(serviceId_1);
+
+        ServiceHealthCache svHealth = ServiceHealthCache.newCache(client.healthClient(), serviceName);
+
+        svHealth.addListener(kv -> {
+            System.out.println(kv.size());
+            kv.forEach((k, v) -> System.err.println(k));
+        });
+
+
+        svHealth.start();
+        svHealth.awaitInitialized(1000, TimeUnit.MILLISECONDS);
+
+        System.err.println("add service 3");
+        client.agentClient().register(8082, 20L, serviceName, serviceId_3, NO_TAGS, NO_META);
+
+        Synchroniser.pause(Duration.ofMillis(2000));
+        System.err.println("pass service 3");
+        client.agentClient().pass(serviceId_3);
+
+
+        Synchroniser.pause(Duration.ofMillis(2000));
+        System.err.println("pass service 3 2");
+        client.agentClient().pass(serviceId_3);
+
+
+        Synchroniser.pause(Duration.ofMillis(2000));
+        System.err.println("fail service 2");
+        client.agentClient().fail(serviceId_2);
+
+        Synchroniser.pause(Duration.ofMillis(2000));
+        System.err.println("pass service 2");
+        client.agentClient().pass(serviceId_2);
+
+
+        Synchroniser.pause(Duration.ofMillis(2000));
+        System.err.println("fail service 2");
+        client.agentClient().fail(serviceId_2);
+
+        Synchroniser.pause(Duration.ofMillis(2000));
+        svHealth.stop();
+    }
+
 
     @Test
     public void shouldNotifyLateListenersIfNoService() throws Exception {

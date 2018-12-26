@@ -52,7 +52,7 @@ public class AgentITest extends BaseIntegrationTest {
         String serviceName = UUID.randomUUID().toString();
         String serviceId = UUID.randomUUID().toString();
 
-        client.agentClient().register(8080, 10000L, serviceName, serviceId, NO_TAGS, NO_META);
+        client.agentClient().register(8080, 10L, serviceName, serviceId, NO_TAGS, NO_META);
 
         Synchroniser.pause(Duration.ofMillis(100));
 

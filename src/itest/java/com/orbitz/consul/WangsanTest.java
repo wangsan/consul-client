@@ -133,6 +133,14 @@ public class WangsanTest {
 
     }
 
+    @Test
+    public void testRaft() {
+        StatusClient statusClient = client.statusClient();
+        statusClient.getPeers().forEach(System.out::println);
+
+        System.out.println(statusClient.getLeader()); // 127.0.0.1:8300
+    }
+
     private void prettyPrint(Object obj) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
